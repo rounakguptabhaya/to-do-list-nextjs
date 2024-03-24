@@ -1,95 +1,148 @@
-import Image from "next/image";
-import styles from "./page.module.css";
+"use client"
+import "../../public/styles.css"
 
-export default function Home() {
-  return (
-    <main className={styles.main}>
-      <div className={styles.description}>
-        <p>
-          Get started by editing&nbsp;
-          <code className={styles.code}>src/app/page.js</code>
-        </p>
-        <div>
-          <a
-            href="https://vercel.com?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            By{" "}
-            <Image
-              src="/vercel.svg"
-              alt="Vercel Logo"
-              className={styles.vercelLogo}
-              width={100}
-              height={24}
-              priority
-            />
-          </a>
-        </div>
+import Link from "next/link";
+import { useEffect, useState, useRef } from "react";
+import { MdDeleteForever } from "react-icons/md";
+import { RxUpdate } from "react-icons/rx";
+
+
+
+export default function Home(){
+  const taskRef = useRef();
+  const taskIdRef = useRef();
+  const taskIDTodeleteRef = useRef();
+  const taskIDToUpdateRef = useRef();
+  const taskNameToUpdateRef = useRef();
+
+  const [inputTask,setInputTask] = useState("");
+
+  const [tasks, setTasks] = useState([]);
+  const [updated,setUpdated] = useState(false);
+  const [updatedError, setUpdatedError] = useState(false);
+  const [created, setCreated] = useState(false);
+  const [deleted,setDeleted] = useState(false);
+  const [deletedError, setDeletedError] = useState(false);
+  
+
+  async function addProduct() {
+    const task = taskRef.current.value.trim();
+    // const taskId = taskIdRef.current.value.trim();
+    // console.log(task);
+    // console.log(taskId);
+    const postData = {
+      method:"POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        task: task,
+        // taskId: taskId,
+      }),
+    }
+
+    if(task.length < 3) return;
+
+    const res = await fetch(`http://localhost:3000/api/tasks1`, postData);
+
+    const response = await res.json();
+
+
+    console.log("Response from addProduct Route::",response);
+
+    // if(response.response.message !== "success") return;
+    // console.log(response);
+
+    setCreated(true);
+    const newTask = response.task;
+
+    setTasks([
+      ...tasks,
+      {
+        task_id:newTask.task_id,
+        task:newTask.task,
+      }
+    ]);
+
+    setInputTask("");
+
+  }
+
+  async function getProducts() {
+    const postData = {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+      },
+    };
+    const res = await fetch(`http://localhost:3000/api/tasks1`, postData);
+
+    const response = await res.json();
+    // console.log(response);
+    // console.log("data");
+    setTasks(response.tasks);
+    // console.log("Task::",tasks);
+  }
+
+  async function deleteProduct(id) {
+      console.log(id);
+    const postData = {
+      method:"DELETE",
+      headers: {
+        "Content-Type":"application/json"
+      },
+      body: JSON.stringify({
+        task_id: id
+      })
+    }
+    console.log(tasks);
+    const res = fetch("http://localhost:3000/api/tasks1", postData);
+
+    const filteredTasks = tasks.filter(task => task.task_id !== id);
+    
+    console.log(filteredTasks);
+    setTasks(filteredTasks);
+
+  }
+
+  async function updateProduct() {
+
+  }
+
+  useEffect(() => {
+    getProducts();
+  }, []);
+
+  return(
+    <>
+    <div className="container">
+      <div>
+        {tasks.map((task,index) => {
+          return(
+            <div key={task.task_id} className="tasks-container">
+              {/* <span>task_id</span>:{task.task_id}<br/>{" "} */}
+              {/* <span>product_name</span>:{task.task}{" "} */}
+              <div className="task-container">
+                <p>{task.task}</p>
+                <div className="operations">
+                  <Link className="operation-btn" href={`${task.task_id}`}><RxUpdate /></Link>
+                  <MdDeleteForever className="operation-btn" type="button" onClick={ () =>{deleteProduct(task.task_id)}}/>
+                </div>
+              </div>
+              
+              
+            </div>
+          )
+        })}
       </div>
 
-      <div className={styles.center}>
-        <Image
-          className={styles.logo}
-          src="/next.svg"
-          alt="Next.js Logo"
-          width={180}
-          height={37}
-          priority
-        />
+      <div className="addTask">
+        <input className="input-field" type="text" ref={taskRef} name="inputTaskName" onChange={e => setInputTask(e.target.value)} value={inputTask}/>
+        <input type="button" value="Add New Task" className="add-btn" onClick={addProduct}/>
       </div>
-
-      <div className={styles.grid}>
-        <a
-          href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className={styles.card}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2>
-            Docs <span>-&gt;</span>
-          </h2>
-          <p>Find in-depth information about Next.js features and API.</p>
-        </a>
-
-        <a
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className={styles.card}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2>
-            Learn <span>-&gt;</span>
-          </h2>
-          <p>Learn about Next.js in an interactive course with&nbsp;quizzes!</p>
-        </a>
-
-        <a
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className={styles.card}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2>
-            Templates <span>-&gt;</span>
-          </h2>
-          <p>Explore starter templates for Next.js.</p>
-        </a>
-
-        <a
-          href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className={styles.card}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2>
-            Deploy <span>-&gt;</span>
-          </h2>
-          <p>
-            Instantly deploy your Next.js site to a shareable URL with Vercel.
-          </p>
-        </a>
-      </div>
-    </main>
-  );
+    </div>
+      
+    </>
+    
+  )
 }
